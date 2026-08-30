@@ -1,0 +1,9 @@
+includes/config.php
+includes/config_live.php
+includes/config.*.php
+!includes/config.example.php
+uploads/*
+!uploads/.htaccess
+*.zip
+teste-dominio.html
+teste-php.php
