@@ -42,6 +42,8 @@ try {
     if (!valid_time($time) || (!$allDay && !valid_time($endTime)) || !strtotime($date)) throw new RuntimeException('Data ou horário inválido.');
     if (!$allDay && $endTime <= $time) throw new RuntimeException('O horário de término deve ser depois do início.');
     if (!in_array(date('N', strtotime($date)), $allowedDays, true)) throw new RuntimeException('Este dia não está permitido para reserva.');
+    if ($recurrence !== 'nenhuma' && !$until) throw new RuntimeException('Informe a data limite para reservas recorrentes.');
+    if ($recurrence === 'semanal' && !$weekdays) throw new RuntimeException('Selecione ao menos um dia da semana.');
 
     $start = new DateTimeImmutable("$date $time");
     $end = $allDay ? new DateTimeImmutable("$date {$config['hora_fim']}") : new DateTimeImmutable("$date $endTime");
