@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Reserva de Areas</title>
+  <desc id="desc">Icone de calendario para o sistema Reserva de Areas</desc>
+  <rect width="128" height="128" rx="28" fill="#223764"/>
+  <rect x="25" y="31" width="78" height="70" rx="12" fill="#fff"/>
+  <path d="M25 52h78" fill="none" stroke="#223764" stroke-width="8"/>
+  <path d="M43 22v20M85 22v20" fill="none" stroke="#ffc20f" stroke-linecap="round" stroke-width="10"/>
+  <path d="m45 75 10 10 27-27" fill="none" stroke="#ffc20f" stroke-linecap="round" stroke-linejoin="round" stroke-width="9"/>
+</svg>

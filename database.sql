@@ -71,6 +71,16 @@ CREATE TABLE reservas (
     KEY idx_reserva_status (status)
 ) ENGINE=InnoDB;
 
+CREATE TABLE demo_runtime (
+    id TINYINT UNSIGNED PRIMARY KEY,
+    iniciado_em DATETIME NOT NULL,
+    reservas_snapshot LONGTEXT NOT NULL,
+    areas_snapshot LONGTEXT NOT NULL,
+    grupos_snapshot LONGTEXT NOT NULL,
+    subgrupos_snapshot LONGTEXT NOT NULL,
+    configuracoes_snapshot LONGTEXT NOT NULL
+) ENGINE=InnoDB;
+
 INSERT INTO usuarios (usuario, senha_hash, nome, tipo) VALUES
 ('admin', '$2y$12$zf4VzxJTAHgD0moVL9IaguykvAukKW/qN7q0O/2h0i0P5JZdytpzy', 'Administrador', 'admin');
 

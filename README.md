@@ -64,6 +64,10 @@ Agende, controle conflitos de horário, gerencie usuários e imprima sua agenda 
 
 ## 🚀 Instalação local
 
+### Ambientes
+
+Defina a variável `RESERVAS_ENV` no Apache/PHP com um destes valores: `local`, `producao` ou `demo`. O ambiente `demo` exibe credenciais de teste, permite que `demo` (senha `demo123`) altere as configurações e restaura a fotografia inicial após duas horas. A regra está concentrada em `includes/demo_environment.php`.
+
 ```bash
 # 1. Clone o repositório
 git clone https://github.com/rfiuzap/Reserva-de-area.git

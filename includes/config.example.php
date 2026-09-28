@@ -12,6 +12,8 @@ const DB_HOST = 'localhost';
 const DB_NAME = 'nome_do_banco';
 const DB_USER = 'usuario_do_banco';
 const DB_PASS = 'senha_do_banco';
+// Valores aceitos: local, producao ou demo.
+define('APP_ENV', getenv('RESERVAS_ENV') ?: 'local');
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
@@ -29,3 +31,6 @@ try {
 } catch (PDOException $exception) {
     exit('Não foi possível conectar ao banco de dados: ' . $exception->getMessage());
 }
+
+require_once __DIR__ . '/demo_environment.php';
+demo_environment_cleanup($pdo);
