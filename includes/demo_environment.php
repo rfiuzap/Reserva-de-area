@@ -33,7 +33,9 @@ function demo_environment_cleanup(PDO $pdo): void
         return;
     }
 
-    if (strtotime($runtime['iniciado_em'] . ' +2 hours') > time()) {
+    // Compared with the database clock: iniciado_em is written with NOW(), and PHP's timezone may differ.
+    $expired = (bool) $pdo->query('SELECT iniciado_em <= NOW() - INTERVAL 2 HOUR FROM demo_runtime WHERE id = 1')->fetchColumn();
+    if (!$expired) {
         return;
     }
 
@@ -58,6 +60,10 @@ function demo_environment_cleanup(PDO $pdo): void
         ]);
         $pdo->exec('UPDATE demo_runtime SET iniciado_em = NOW() WHERE id = 1');
         $pdo->commit();
+        try {
+            $pdo->exec('DELETE FROM historico_alteracoes'); // demo changes are discarded, so is their history
+        } catch (PDOException) {
+        }
         demo_remove_non_baseline_uploads($baselineFiles);
     } catch (Throwable $exception) {
         $pdo->rollBack();

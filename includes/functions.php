@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/history.php';
+
 function require_login(): void {
     if (empty($_SESSION['usuario_id'])) {
         header('Location: login.php');

@@ -72,6 +72,21 @@ CREATE TABLE reservas (
     KEY idx_reserva_status (status)
 ) ENGINE=InnoDB;
 
+-- Criada automaticamente na primeira alteração registrada (includes/history.php), caso não exista.
+CREATE TABLE historico_alteracoes (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT UNSIGNED DEFAULT NULL,
+    usuario_nome VARCHAR(120) NOT NULL,
+    acao VARCHAR(20) NOT NULL,
+    entidade VARCHAR(20) NOT NULL,
+    entidade_id INT UNSIGNED DEFAULT NULL,
+    titulo VARCHAR(255) NOT NULL,
+    alteracoes TEXT DEFAULT NULL,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_historico_entidade (entidade, criado_em),
+    KEY idx_historico_usuario (usuario_nome)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE demo_runtime (
     id TINYINT UNSIGNED PRIMARY KEY,
     iniciado_em DATETIME NOT NULL,

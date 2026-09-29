@@ -70,6 +70,8 @@ try {
         }
     }
 
+    $before = $reservationId ? history_snapshot($pdo, 'reserva', $reservationId) : [];
+    $newIds = [];
     $pdo->beginTransaction();
     $subgroupsCsv = implode(',', $subgroupIds);
     $areasCsv = serialize_area_ids($areaIds);
@@ -89,9 +91,20 @@ try {
             $itemStart = "$reservationDate $time";
             $itemEnd = $allDay ? "$reservationDate {$config['hora_fim']}" : "$reservationDate $endTime";
             $insert->execute([$groupId, $subgroupIds[0], $subgroupsCsv, $allAreas ? null : $areaId, $areasCsv, $allAreas ? 1 : 0, $itemStart, $itemEnd, $allDay ? 1 : 0, $_SESSION['usuario_nome'] ?? null, $recurrence, $seriesId]);
+            $newIds[] = (int) $pdo->lastInsertId();
         }
     }
     $pdo->commit();
+
+    $logId = $reservationId ?: ($newIds[0] ?? 0);
+    $extra = [];
+    if ($reservationId && ($scope ?? '') === 'series' && !empty($_POST['serie_id'])) {
+        $extra[] = ['campo' => 'Aplicado a', 'antes' => '', 'depois' => 'toda a recorrência'];
+    }
+    if (count($newIds) > 1) {
+        $extra[] = ['campo' => 'Ocorrências', 'antes' => '', 'depois' => count($newIds) . ' datas'];
+    }
+    history_log($pdo, 'reserva', $logId, $before, history_snapshot($pdo, 'reserva', $logId), $extra);
     echo json_encode(['success' => true, 'message' => $reservationId ? 'Reserva atualizada com sucesso.' : 'Reserva criada com sucesso.'], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $exception) {
     if ($pdo->inTransaction()) $pdo->rollBack();

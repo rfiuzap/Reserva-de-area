@@ -21,8 +21,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($name === '') {
         flash('error', 'Informe o nome do subgrupo.');
     } else {
+        $before = history_snapshot($pdo, 'subgrupo', $subgroupId);
         $update = $pdo->prepare('UPDATE subgrupos SET nome = ?, status = ? WHERE id = ?');
         $update->execute([$name, $status, $subgroupId]);
+        history_log($pdo, 'subgrupo', $subgroupId, $before, history_snapshot($pdo, 'subgrupo', $subgroupId));
         flash('success', 'Subgrupo atualizado.');
         redirect('grupos.php?editar_grupo=' . $subgroup['grupo_id']);
     }

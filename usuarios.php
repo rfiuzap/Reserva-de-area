@@ -10,21 +10,25 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
         if($id === (int)$_SESSION['usuario_id']) { $current=$pdo->prepare('SELECT tipo FROM usuarios WHERE id=?'); $current->execute([$id]); $tipo=$current->fetchColumn(); }
         $exists=$pdo->prepare('SELECT id FROM usuarios WHERE usuario=? AND id<>?'); $exists->execute([$usuario,$id]);
         if($exists->fetch()) throw new RuntimeException('Já existe um usuário com esse login.');
+        $before = $id ? history_snapshot($pdo, 'usuario', $id) : [];
         if($id) {
             if($senha!=='') $pdo->prepare('UPDATE usuarios SET usuario=?,nome=?,tipo=?,senha_hash=? WHERE id=?')->execute([$usuario,$nome,$tipo,password_hash($senha,PASSWORD_DEFAULT),$id]);
             else $pdo->prepare('UPDATE usuarios SET usuario=?,nome=?,tipo=? WHERE id=?')->execute([$usuario,$nome,$tipo,$id]);
             flash('success','Usuário atualizado com sucesso.');
         } else {
             $pdo->prepare('INSERT INTO usuarios (usuario,senha_hash,nome,tipo) VALUES (?,?,?,?)')->execute([$usuario,password_hash($senha,PASSWORD_DEFAULT),$nome,$tipo]);
+            $id = (int) $pdo->lastInsertId();
             flash('success','Usuário criado com sucesso.');
         }
+        $passwordChange = $senha !== '' ? [['campo' => 'Senha', 'antes' => '', 'depois' => $before ? '(alterada)' : '(definida)']] : [];
+        history_log($pdo, 'usuario', $id, $before, history_snapshot($pdo, 'usuario', $id), $passwordChange);
         redirect('usuarios.php');
     } catch(Throwable $e) { flash('error',$e->getMessage()); }
 }
 if (isset($_GET['toggle'])) {
     $toggleId=(int)$_GET['toggle'];
     if ($toggleId === (int)$_SESSION['usuario_id']) { flash('error','Você não pode ocultar o próprio usuário.'); }
-    else { $pdo->prepare("UPDATE usuarios SET status=IF(status='ativo','oculto','ativo') WHERE id=?")->execute([$toggleId]); flash('success','Status atualizado.'); }
+    else { $before=history_snapshot($pdo,'usuario',$toggleId); $pdo->prepare("UPDATE usuarios SET status=IF(status='ativo','oculto','ativo') WHERE id=?")->execute([$toggleId]); history_log($pdo,'usuario',$toggleId,$before,history_snapshot($pdo,'usuario',$toggleId)); flash('success','Status atualizado.'); }
     redirect('usuarios.php'.(isset($_GET['status'])?'?status='.urlencode($_GET['status']):''));
 }
 $editUser=['id'=>'','usuario'=>'','nome'=>'','tipo'=>'normal'];
