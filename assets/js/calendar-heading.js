@@ -12,9 +12,62 @@
 
     const heading = document.querySelector('main h1');
     const period = heading?.nextElementSibling;
-    const reference = parameters.get('data') || new Date().toISOString().slice(0, 10);
+    const dateKey = (date) => [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+    const reference = parameters.get('data') || dateKey(new Date());
     if (!heading || !period || !reference) {
         return;
+    }
+
+    const previousLink = Array.from(document.querySelectorAll('a')).find((link) => link.textContent.trim() === 'Anterior');
+    if (previousLink && !document.querySelector('[data-today-navigation]')) {
+        const todayUrl = new URL(window.location.href);
+        todayUrl.searchParams.set('data', dateKey(new Date()));
+        const todayLink = document.createElement('a');
+        todayLink.className = previousLink.className;
+        todayLink.href = todayUrl.toString();
+        todayLink.textContent = 'Hoje';
+        todayLink.dataset.todayNavigation = 'true';
+        previousLink.before(todayLink);
+    }
+
+    const activeFilters = ['meu', 'grupo_filtro', 'area_filtro']
+        .map((name) => [name, parameters.get(name)])
+        .filter(([, value]) => value !== null);
+    if (activeFilters.length) {
+        const navigationLabels = new Set(['Anterior', 'Próxima', 'Dia', 'Mês']);
+        document.querySelectorAll('a').forEach((link) => {
+            if (!navigationLabels.has(link.textContent.trim())) {
+                return;
+            }
+
+            const target = new URL(link.href, window.location.href);
+            activeFilters.forEach(([name, value]) => target.searchParams.set(name, value));
+            link.href = target.toString();
+        });
+    }
+
+    const markToday = (elements, firstDate) => {
+        const todayKey = dateKey(new Date());
+        elements.forEach((element, index) => {
+            const date = new Date(firstDate);
+            date.setDate(date.getDate() + index);
+            if (dateKey(date) === todayKey) {
+                element.classList.add('is-today');
+            }
+        });
+    };
+
+    const pageDate = new Date(`${reference}T12:00:00`);
+    const dayRows = document.querySelectorAll('.agenda-day-row');
+    if (dayRows.length) {
+        markToday(dayRows, pageDate);
+    }
+
+    const monthCells = document.querySelectorAll('.month-grid .month-cell');
+    if (monthCells.length) {
+        const firstMonthDate = new Date(pageDate);
+        firstMonthDate.setDate(1);
+        markToday(monthCells, firstMonthDate);
     }
 
     const tabs = document.querySelector('.btn-group');

@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 const DEMO_RUNTIME_TABLE = 'demo_runtime';
-const DEMO_RESERVAS_COLUMNS = 'id,grupo_id,subgrupo_id,subgrupos_ids,area_id,todas_areas,data_inicio,data_fim,dia_inteiro,criado_por,recorrencia,serie_id,status,cancelado_por,motivo_cancelamento,criado_em,atualizado_em';
+const DEMO_RESERVAS_COLUMNS = 'id,grupo_id,subgrupo_id,subgrupos_ids,area_id,areas_ids,todas_areas,data_inicio,data_fim,dia_inteiro,criado_por,recorrencia,serie_id,status,cancelado_por,motivo_cancelamento,criado_em,atualizado_em';
 
 function demo_environment_cleanup(PDO $pdo): void
 {
@@ -39,7 +39,10 @@ function demo_environment_cleanup(PDO $pdo): void
 
     $baselineAreas = json_decode($runtime['areas_snapshot'], true, 512, JSON_THROW_ON_ERROR);
     $baselineConfig = json_decode($runtime['configuracoes_snapshot'], true, 512, JSON_THROW_ON_ERROR);
-    $baselineFiles = array_filter(array_merge(array_column($baselineAreas, 'imagem'), [$baselineConfig['logo']]));
+    $baselineFiles = array_filter(array_merge(
+        array_column($baselineAreas, 'imagem'),
+        [$baselineConfig['logo'], 'if1im5if1im5if1.jpeg']
+    ));
     $pdo->beginTransaction();
     try {
         foreach (['reservas', 'subgrupos', 'grupos', 'areas'] as $table) {

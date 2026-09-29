@@ -14,12 +14,12 @@
             const response = await fetch('api_verificar_conflito.php', { method: 'POST', body: new FormData(form) });
             const result = await response.json();
             if (!response.ok) {
-                showConflictMessage(result.error || 'Não foi possível validar a disponibilidade.');
+                showConflictMessage(result.error || 'Não foi possível validar os dados da reserva.', 'Verifique os dados da reserva');
                 return;
             }
             if (result.hasConflict) {
                 const formattedDates = result.dates.map((date) => new Intl.DateTimeFormat('pt-BR').format(new Date(`${date}T12:00:00`))).join(', ');
-                showConflictMessage(`Já existe uma reserva ativa nesta área para ${formattedDates}. A reserva não foi criada.`);
+                showConflictMessage(`Já existe uma reserva ativa em conflito nas datas ${formattedDates}. Verifique a disponibilidade das áreas e horários selecionados.`, 'Conflito de horário');
                 return;
             }
             submitButton.textContent = 'Salvando reserva...';
@@ -34,10 +34,13 @@
         }
     });
 
-    function showConflictMessage(message) {
+    function showConflictMessage(message, title) {
         const modalElement = document.querySelector('#conflictModal');
         if (!modalElement) {
             return;
+        }
+        if (title) {
+            modalElement.querySelector('.modal-title').textContent = title;
         }
         modalElement.querySelector('.modal-body').textContent = message;
         bootstrap.Modal.getOrCreateInstance(modalElement).show();

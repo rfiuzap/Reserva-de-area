@@ -10,11 +10,34 @@
     allDayBox.after(allAreasBox);
     const allAreas = allAreasBox.querySelector('#allAreas');
 
+    const multiAreaBox = document.querySelector('#multiAreaBox');
+    if (multiAreaBox) {
+        const multiAreaToggle = document.querySelector('#multiAreaToggle');
+        const toggleMultiArea = () => {
+            const checked = !!multiAreaToggle && multiAreaToggle.checked;
+            multiAreaBox.classList.toggle('d-none', !checked);
+            area.disabled = checked;
+            area.required = !checked;
+            if (checked) {
+                area.value = '';
+            }
+        };
+
+        multiAreaToggle?.addEventListener('change', () => {
+            toggleMultiArea();
+            document.dispatchEvent(new Event('reservation-area-mode-change'));
+        });
+        toggleMultiArea();
+    }
+
     function updateAvailability() {
         const isSpecial = group.selectedOptions[0]?.dataset.special === '1';
         allAreasBox.classList.toggle('d-none', !isSpecial);
         if (!isSpecial) allAreas.checked = false;
-        area.disabled = allAreas.checked;
+        if (multiAreaBox && multiAreaBox.classList.contains('d-none')) {
+            area.disabled = allAreas.checked;
+            area.required = !allAreas.checked;
+        }
         document.dispatchEvent(new Event('reservation-area-mode-change'));
     }
 

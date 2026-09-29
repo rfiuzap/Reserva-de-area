@@ -52,6 +52,7 @@ CREATE TABLE reservas (
     subgrupo_id INT UNSIGNED NOT NULL,
     subgrupos_ids VARCHAR(255) DEFAULT NULL,
     area_id INT UNSIGNED DEFAULT NULL,
+    areas_ids VARCHAR(255) DEFAULT NULL,
     todas_areas TINYINT(1) NOT NULL DEFAULT 0,
     data_inicio DATETIME NOT NULL,
     data_fim DATETIME NOT NULL,

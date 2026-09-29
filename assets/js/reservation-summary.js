@@ -13,6 +13,18 @@
         return;
     }
 
+    const multiAreaImage = 'uploads/if1im5if1im5if1.jpeg';
+    const getSelectedAreaIds = () => {
+        const checked = Array.from(document.querySelectorAll('input[name="area_ids[]"]:checked'));
+        const fromCheckboxes = checked.map((input) => Number(input.value)).filter((value) => Number.isFinite(value) && value > 0);
+        if (fromCheckboxes.length) {
+            return fromCheckboxes;
+        }
+
+        const selectedArea = Number(area.value);
+        return Number.isFinite(selectedArea) && selectedArea > 0 ? [selectedArea] : [];
+    };
+
     fetch('api_config_agenda.php')
         .then((response) => response.json())
         .then(() => {
@@ -44,7 +56,10 @@
         summary.querySelector('.summary-date').innerHTML = `${weekday}: <strong>${dateParts.join(' ')}</strong>`;
         const endLabel = endTime && endTime.value && !(allDay && allDay.checked) ? ` · Término: <strong>${endTime.value}</strong>` : '';
         summary.querySelector('.summary-time').innerHTML = time.value ? `Início: <strong>${time.value}</strong>${endLabel}` : 'Horário não definido';
-        summary.querySelector('.summary-recurrence').textContent = recurrence && recurrence.value !== 'nenhuma' ? `Recorrência: ${recurrence.value === 'semanal' ? 'Semanal' : 'Mensal'}` : 'Não recorrente';
+        const recurrenceText = recurrence && recurrence.value !== 'nenhuma'
+            ? `Recorrente: ${recurrence.value === 'semanal' ? 'Semanal' : 'Mensal'}`
+            : 'Não recorrente';
+        summary.querySelector('.summary-recurrence').textContent = recurrenceText;
         if (allDay && allDay.checked) {
             summary.querySelector('.summary-duration').innerHTML = 'Duração: <strong>dia todo</strong>';
         } else if (time.value && endTime && endTime.value) {
@@ -54,8 +69,9 @@
             summary.querySelector('.summary-duration').innerHTML = 'Duração não definida';
         }
 
+        const selectedAreaIds = getSelectedAreaIds();
         const currentRequest = ++requestNumber;
-        const info = await fetch(`api_reserva_info.php?grupo_id=${encodeURIComponent(group.value)}&area_id=${encodeURIComponent(area.value)}`).then((response) => response.json()).catch(() => ({}));
+        const info = await fetch(`api_reserva_info.php?grupo_id=${encodeURIComponent(group.value)}&area_id=${encodeURIComponent(area.value)}&area_ids=${encodeURIComponent(selectedAreaIds.join(','))}`).then((response) => response.json()).catch(() => ({}));
         if (currentRequest !== requestNumber) {
             return;
         }
@@ -72,6 +88,15 @@
             areaName.textContent = 'Todas as áreas';
             return;
         }
+
+        if (selectedAreaIds.length > 1) {
+            image.src = multiAreaImage;
+            image.classList.remove('d-none');
+            placeholder.classList.add('d-none');
+            areaName.textContent = 'Várias áreas';
+            return;
+        }
+
         areaName.textContent = info.area ? info.area.nome : 'Selecione a área';
         if (info.area && info.area.imagem) {
             image.src = `uploads/${encodeURIComponent(info.area.imagem)}`;

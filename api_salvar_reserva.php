@@ -11,7 +11,14 @@ try {
     $allowedDays = explode(',', $config['dias_permitidos']);
     $groupId = (int) ($_POST['grupo_id'] ?? 0);
     $subgroupIds = array_values(array_unique(array_filter(array_map('intval', (array) ($_POST['subgrupo_id'] ?? [])))));
-    $areaId = (int) ($_POST['area_id'] ?? 0);
+    $areaIds = array_values(array_unique(array_filter(array_map('intval', (array) ($_POST['area_ids'] ?? [])))));
+    if (!$areaIds && isset($_POST['area_id'])) {
+        $parsedSingleArea = (int) $_POST['area_id'];
+        if ($parsedSingleArea > 0) {
+            $areaIds = [$parsedSingleArea];
+        }
+    }
+    $areaId = $areaIds ? (int) $areaIds[0] : 0;
     $allAreas = isset($_POST['todas_areas']);
     $date = $_POST['data'] ?? '';
     $time = $_POST['hora_inicio'] ?? '';
@@ -37,7 +44,7 @@ try {
 
     if ($allAreas && !(int) $group['especial']) throw new RuntimeException('Somente grupos especiais podem marcar todas as áreas.');
     if ($allAreas && $reservationId) throw new RuntimeException('Para marcar todas as áreas, crie uma nova reserva especial.');
-    if (!$allAreas && !$areaId) throw new RuntimeException('Selecione uma área.');
+    if (!$allAreas && !$areaIds) throw new RuntimeException('Selecione ao menos uma área.');
     if ($allDay && !(int) $group['especial']) throw new RuntimeException('Somente grupos especiais podem fechar a agenda durante todo o dia.');
     if (!valid_time($time) || (!$allDay && !valid_time($endTime)) || !strtotime($date)) throw new RuntimeException('Data ou horário inválido.');
     if (!$allDay && $endTime <= $time) throw new RuntimeException('O horário de término deve ser depois do início.');
@@ -55,21 +62,33 @@ try {
     foreach ($dates as $reservationDate) {
         $itemStart = "$reservationDate $time";
         $itemEnd = $allDay ? "$reservationDate {$config['hora_fim']}" : "$reservationDate $endTime";
-        if (reservation_conflict($pdo, $allAreas ? null : $areaId, $itemStart, $itemEnd, $allAreas, $reservationId)) throw new RuntimeException("Há conflito de horário em $reservationDate. A reserva não foi criada.");
+        $areasToCheck = $allAreas ? [null] : $areaIds;
+        foreach ($areasToCheck as $areaCheckId) {
+            if (reservation_conflict($pdo, $areaCheckId, $itemStart, $itemEnd, $allAreas, $reservationId)) {
+                throw new RuntimeException("Há conflito de horário em $reservationDate. A reserva não foi criada.");
+            }
+        }
     }
 
     $pdo->beginTransaction();
     $subgroupsCsv = implode(',', $subgroupIds);
+    $areasCsv = serialize_area_ids($areaIds);
     if ($reservationId) {
-        $update = $pdo->prepare('UPDATE reservas SET grupo_id=?, subgrupo_id=?, subgrupos_ids=?, area_id=?, todas_areas=?, data_inicio=?, data_fim=?, dia_inteiro=?, recorrencia=? WHERE id=?');
-        $update->execute([$groupId, $subgroupIds[0], $subgroupsCsv, $allAreas ? null : $areaId, $allAreas ? 1 : 0, $start->format('Y-m-d H:i:s'), $end->format('Y-m-d H:i:s'), $allDay ? 1 : 0, 'nenhuma', $reservationId]);
+        $scope = $_POST['recorrencia_scope'] ?? 'this';
+        if ($scope === 'series' && !empty($_POST['serie_id'])) {
+            $update = $pdo->prepare('UPDATE reservas SET grupo_id=?, subgrupo_id=?, subgrupos_ids=?, area_id=?, areas_ids=?, todas_areas=?, dia_inteiro=?, recorrencia=? WHERE serie_id=? AND status = "ativa"');
+            $update->execute([$groupId, $subgroupIds[0], $subgroupsCsv, $allAreas ? null : $areaId, $areasCsv, $allAreas ? 1 : 0, $allDay ? 1 : 0, $recurrence, $_POST['serie_id']]);
+        } else {
+            $update = $pdo->prepare('UPDATE reservas SET grupo_id=?, subgrupo_id=?, subgrupos_ids=?, area_id=?, areas_ids=?, todas_areas=?, data_inicio=?, data_fim=?, dia_inteiro=?, recorrencia=? WHERE id=?');
+            $update->execute([$groupId, $subgroupIds[0], $subgroupsCsv, $allAreas ? null : $areaId, $areasCsv, $allAreas ? 1 : 0, $start->format('Y-m-d H:i:s'), $end->format('Y-m-d H:i:s'), $allDay ? 1 : 0, $recurrence, $reservationId]);
+        }
     } else {
         $seriesId = count($dates) > 1 ? bin2hex(random_bytes(16)) : null;
-        $insert = $pdo->prepare('INSERT INTO reservas (grupo_id,subgrupo_id,subgrupos_ids,area_id,todas_areas,data_inicio,data_fim,dia_inteiro,criado_por,recorrencia,serie_id) VALUES (?,?,?,?,?,?,?,?,?,?,?)');
+        $insert = $pdo->prepare('INSERT INTO reservas (grupo_id,subgrupo_id,subgrupos_ids,area_id,areas_ids,todas_areas,data_inicio,data_fim,dia_inteiro,criado_por,recorrencia,serie_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
         foreach ($dates as $reservationDate) {
             $itemStart = "$reservationDate $time";
             $itemEnd = $allDay ? "$reservationDate {$config['hora_fim']}" : "$reservationDate $endTime";
-            $insert->execute([$groupId, $subgroupIds[0], $subgroupsCsv, $allAreas ? null : $areaId, $allAreas ? 1 : 0, $itemStart, $itemEnd, $allDay ? 1 : 0, $_SESSION['usuario_nome'] ?? null, $recurrence, $seriesId]);
+            $insert->execute([$groupId, $subgroupIds[0], $subgroupsCsv, $allAreas ? null : $areaId, $areasCsv, $allAreas ? 1 : 0, $itemStart, $itemEnd, $allDay ? 1 : 0, $_SESSION['usuario_nome'] ?? null, $recurrence, $seriesId]);
         }
     }
     $pdo->commit();

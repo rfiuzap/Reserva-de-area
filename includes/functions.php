@@ -46,9 +46,33 @@ function upload_image(array $file, ?string $oldFile = null): ?string {
     return $filename;
 }
 
+function normalize_area_ids(array $areaIds): array {
+    $ids = array_values(array_unique(array_filter(array_map('intval', $areaIds))));
+    sort($ids, SORT_NUMERIC);
+    return $ids;
+}
+
+function serialize_area_ids(array $areaIds): ?string {
+    $ids = normalize_area_ids($areaIds);
+    return $ids ? implode(',', $ids) : null;
+}
+
+function area_label_from_ids(?string $areasCsv, ?int $mainAreaId): string {
+    $ids = $areasCsv ? array_filter(array_map('intval', explode(',', $areasCsv))) : [];
+    if ($ids) {
+        $names = [];
+        foreach ($ids as $id) {
+            $names[] = (string) $id;
+        }
+        return implode(', ', $names);
+    }
+
+    return $mainAreaId ? (string) $mainAreaId : 'Todas as áreas';
+}
+
 function reservation_conflict(PDO $pdo, ?int $areaId, string $start, string $end, bool $allAreas = false, int $ignoreId = 0): bool {
-    $statement = $pdo->prepare("SELECT COUNT(*) FROM reservas WHERE status = 'ativa' AND data_inicio < ? AND data_fim > ? AND id <> ? AND (todas_areas = 1 OR ? = 1 OR area_id = ?)");
-    $statement->execute([$end, $start, $ignoreId, $allAreas ? 1 : 0, $areaId]);
+    $statement = $pdo->prepare("SELECT COUNT(*) FROM reservas WHERE status = 'ativa' AND data_inicio < ? AND data_fim > ? AND id <> ? AND (todas_areas = 1 OR ? = 1 OR area_id = ? OR FIND_IN_SET(?, areas_ids))");
+    $statement->execute([$end, $start, $ignoreId, $allAreas ? 1 : 0, $areaId, $areaId]);
     return (int) $statement->fetchColumn() > 0;
 }
 

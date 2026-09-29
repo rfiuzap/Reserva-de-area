@@ -9,3 +9,6 @@
 .month-grid .month-cell { min-height: 170px; padding: .5rem .6rem; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px #22376412; overflow: hidden; }
 .month-cell-date { display: block; font-size: .75rem; font-weight: 700; color: var(--navy); margin-bottom: .25rem; }
 @media (max-width: 768px) { .month-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.agenda-day-row.is-today, .month-grid .month-cell.is-today { animation: today-border-blink 1s steps(2, end) infinite; outline: 2px solid #dc3545; outline-offset: -2px; }
+@keyframes today-border-blink { 0%, 49% { outline-color: #dc3545; } 50%, 100% { outline-color: transparent; } }
+@media (prefers-reduced-motion: reduce) { .agenda-day-row.is-today, .month-grid .month-cell.is-today { animation: none; outline-color: #dc3545; } }
