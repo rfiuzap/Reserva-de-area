@@ -16,7 +16,7 @@ if ($areaId) { $conditions[] = 'r.area_id = ?'; $parameters[] = $areaId; }
 if ($reservationDate) { $conditions[] = 'DATE(r.data_inicio) = ?'; $parameters[] = $reservationDate; }
 if ($cancellationDate) { $conditions[] = 'DATE(r.atualizado_em) = ?'; $parameters[] = $cancellationDate; }
 
-$sql = "SELECT r.*, g.nome AS grupo, COALESCE((SELECT GROUP_CONCAT(sg.nome ORDER BY sg.nome SEPARATOR ', ') FROM subgrupos sg WHERE FIND_IN_SET(sg.id, r.subgrupos_ids)), s.nome) AS subgrupo, COALESCE(a.nome, 'Todas as áreas') AS area FROM reservas r JOIN grupos g ON g.id = r.grupo_id JOIN subgrupos s ON s.id = r.subgrupo_id LEFT JOIN areas a ON a.id = r.area_id WHERE " . implode(' AND ', $conditions) . ' ORDER BY r.atualizado_em DESC';
+$sql = "SELECT r.*, g.nome AS grupo, COALESCE((SELECT GROUP_CONCAT(sg.nome ORDER BY sg.nome SEPARATOR ', ') FROM subgrupos sg WHERE FIND_IN_SET(sg.id, r.subgrupos_ids)), s.nome) AS subgrupo, " . area_names_sql() . " AS area FROM reservas r JOIN grupos g ON g.id = r.grupo_id JOIN subgrupos s ON s.id = r.subgrupo_id LEFT JOIN areas a ON a.id = r.area_id WHERE " . implode(' AND ', $conditions) . ' ORDER BY r.atualizado_em DESC';
 $statement = $pdo->prepare($sql);
 $statement->execute($parameters);
 $reservations = $statement->fetchAll();

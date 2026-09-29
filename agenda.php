@@ -17,7 +17,7 @@ $params = [$start->format('Y-m-d 00:00:00'), $end->modify('+1 day')->format('Y-m
 if ($filterMine) { $conditions[] = 'r.criado_por = ?'; $params[] = $_SESSION['usuario_nome'] ?? ''; }
 if ($filterGroupId) { $conditions[] = 'r.grupo_id = ?'; $params[] = $filterGroupId; }
 if ($filterAreaId) { $conditions[] = 'r.area_id = ?'; $params[] = $filterAreaId; }
-$statement = $pdo->prepare("SELECT r.*, g.nome AS grupo, g.cor, COALESCE((SELECT GROUP_CONCAT(sg.nome ORDER BY sg.nome SEPARATOR ', ') FROM subgrupos sg WHERE FIND_IN_SET(sg.id, r.subgrupos_ids)), s.nome) AS subgrupo, COALESCE(a.nome, 'Todas as áreas') AS area FROM reservas r JOIN grupos g ON g.id = r.grupo_id JOIN subgrupos s ON s.id = r.subgrupo_id LEFT JOIN areas a ON a.id = r.area_id WHERE " . implode(' AND ', $conditions) . ' ORDER BY r.data_inicio');
+$statement = $pdo->prepare("SELECT r.*, g.nome AS grupo, g.cor, COALESCE((SELECT GROUP_CONCAT(sg.nome ORDER BY sg.nome SEPARATOR ', ') FROM subgrupos sg WHERE FIND_IN_SET(sg.id, r.subgrupos_ids)), s.nome) AS subgrupo, " . area_names_sql() . " AS area FROM reservas r JOIN grupos g ON g.id = r.grupo_id JOIN subgrupos s ON s.id = r.subgrupo_id LEFT JOIN areas a ON a.id = r.area_id WHERE " . implode(' AND ', $conditions) . ' ORDER BY r.data_inicio');
 $statement->execute($params);
 $byDay = [];
 foreach ($statement->fetchAll() as $reservation) $byDay[date('Y-m-d', strtotime($reservation['data_inicio']))][] = $reservation;

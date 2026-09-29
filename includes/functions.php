@@ -57,6 +57,11 @@ function serialize_area_ids(array $areaIds): ?string {
     return $ids ? implode(',', $ids) : null;
 }
 
+/** SQL expression with the reservation's area names ("A; B; C"). Expects reservas r and areas a (LEFT JOIN on r.area_id). */
+function area_names_sql(): string {
+    return "CASE WHEN r.todas_areas = 1 THEN 'Todas as áreas' ELSE COALESCE((SELECT GROUP_CONCAT(ar.nome ORDER BY ar.nome SEPARATOR '; ') FROM areas ar WHERE FIND_IN_SET(ar.id, r.areas_ids)), a.nome, 'Todas as áreas') END";
+}
+
 function area_label_from_ids(?string $areasCsv, ?int $mainAreaId): string {
     $ids = $areasCsv ? array_filter(array_map('intval', explode(',', $areasCsv))) : [];
     if ($ids) {
